@@ -1,0 +1,3 @@
+- name: Set the timezone
+  community.general.timezone:
+    name: "{{ baseline_timezone }}"

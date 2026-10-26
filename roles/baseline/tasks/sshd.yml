@@ -1,0 +1,58 @@
+# Checks before change
+- name: Check the current sshd config before changing it
+  ansible.builtin.command: /usr/sbin/sshd -t
+  changed_when: false
+
+- name: Refuse to harden a host without the personal key
+  ansible.builtin.assert:
+    that: baseline_alec_key_users | length > 0 or 'pve_nodes' in group_names
+    fail_msg: No account on this host holds alec_pubkey.
+    quiet: true
+
+- name: Read the personal accounts' authorized keys
+  ansible.builtin.slurp:
+    src: "~{{ item }}/.ssh/authorized_keys"
+  loop: "{{ baseline_alec_key_users }}"
+  register: baseline_alec_keyfiles
+
+- name: Read root's authorized keys on the PVE node
+  ansible.builtin.slurp:
+    src: /etc/pve/priv/authorized_keys
+  register: baseline_pve_root_keys
+  when: "'pve_nodes' in group_names"
+
+- name: Refuse to harden unless the personal key is everywhere it should be
+  ansible.builtin.assert:
+    that:
+      - baseline_alec_keyfiles.results | map(attribute='content') | map('b64decode')
+        | select('search', alec_pubkey.split()[1], ignorecase=false) | list | length
+        == baseline_alec_key_users | length
+      - "'pve_nodes' not in group_names or alec_pubkey.split()[1] in (baseline_pve_root_keys.content | b64decode)"
+    fail_msg: alec_pubkey is missing from an account on this host (or from /etc/pve/priv/authorized_keys).
+    quiet: true
+
+# Deploy and confirm before reload
+- name: Deploy the baseline sshd drop-in
+  ansible.builtin.template:
+    src: 10-baseline.conf
+    dest: /etc/ssh/sshd_config.d/10-baseline.conf
+    owner: root
+    group: root
+    mode: "0644"
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Reload ssh
+
+- name: Read the effective sshd config
+  ansible.builtin.command: /usr/sbin/sshd -T
+  register: baseline_sshd_effective
+  changed_when: false
+
+- name: Confirm the effective config is key-only
+  ansible.builtin.assert:
+    that:
+      - "'passwordauthentication no' in baseline_sshd_effective.stdout_lines"
+      - "'kbdinteractiveauthentication no' in baseline_sshd_effective.stdout_lines"
+      - "'permitrootlogin prohibit-password' in baseline_sshd_effective.stdout_lines
+        or 'permitrootlogin without-password' in baseline_sshd_effective.stdout_lines"
+    fail_msg: Another sshd setting overrides the baseline drop-in; sshd was not reloaded.
+    quiet: true

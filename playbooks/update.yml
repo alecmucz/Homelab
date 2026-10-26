@@ -1,0 +1,24 @@
+- name: Update packages
+  hosts: "{{ target | default('auto') }}"
+  become: true
+  serial: 1
+ 
+  tasks:
+    - name: Upgrade packages
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+        upgrade: "{{ 'dist' if 'pve_nodes' in group_names else 'safe' }}"
+      register: upgrade_result
+ 
+    - name: Check for a pending reboot
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_flag
+ 
+    - name: Report result
+      ansible.builtin.debug:
+        msg: >-
+          {{ 'packages upgraded' if upgrade_result.changed else 'already up to date' }};
+          {{ 'REBOOT REQUIRED' if reboot_flag.stat.exists else 'no reboot needed' }}
+

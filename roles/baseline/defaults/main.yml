@@ -1,0 +1,10 @@
+baseline_timezone: America/New_York
+
+baseline_packages:
+  - sysstat
+
+baseline_alec_key_users: []
+
+# Opt-in per host
+baseline_sshd_hardening: false
+baseline_dns_fix: false

@@ -1,0 +1,6 @@
+- name: Apply the baseline
+  hosts: "{{ target | default('all') }}"
+  become: true
+
+  roles:
+    - baseline

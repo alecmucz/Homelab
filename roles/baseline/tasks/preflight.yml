@@ -1,0 +1,13 @@
+- name: Refuse placeholder or malformed public keys
+  ansible.builtin.assert:
+    that:
+      - automation_pubkey | default('') is match('^ssh-(ed25519|rsa) ')
+      - alec_pubkey | default('') is match('^ssh-(ed25519|rsa) ')
+    fail_msg: Set automation_pubkey and alec_pubkey in inventory/group_vars/all/vars.yml first.
+    quiet: true
+
+- name: Refuse to manage root's keys on PVE nodes
+  ansible.builtin.assert:
+    that: not ('pve_nodes' in group_names and 'root' in baseline_alec_key_users)
+    fail_msg: Root's keys on PVE nodes live in /etc/pve/priv/authorized_keys and are added by hand.
+    quiet: true

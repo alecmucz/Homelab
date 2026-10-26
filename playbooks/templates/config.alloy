@@ -1,0 +1,84 @@
+prometheus.scrape "nodes" {
+  targets = [
+{% for host in groups['all'] | sort %}
+{% if hostvars[host].ansible_host is defined %}
+    {"__address__" = "{{ hostvars[host].ansible_host }}:9100", "instance" = "{{ host }}", "availability" = "{{ hostvars[host].availability | default('always_on') }}"},
+{% endif %}
+{% endfor %}
+    {"__address__" = "10.10.10.30:9100", "instance" = "jetson01", "availability" = "always_on"},
+  ]
+  scrape_interval = "60s"
+  forward_to      = [prometheus.relabel.node_allowlist.receiver]
+}
+
+// Node metrics keep-list
+prometheus.relabel "node_allowlist" {
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+
+  rule {
+    source_labels = ["__name__"]
+    regex         = "up|scrape_samples_scraped|node_cpu_seconds_total|node_load(1|5|15)|node_memory_(MemAvailable|MemTotal)_bytes|node_pressure_.*|node_filesystem_(avail|size)_bytes|node_disk_(read_bytes|written_bytes|io_time_seconds)_total|node_network_(receive|transmit)_(bytes|errs)_total|node_zfs_arc_(size|c_max)|node_systemd_units|node_timex_(sync_status|offset_seconds)|lab_.*"
+    action        = "keep"
+  }
+}
+
+prometheus.scrape "pve" {
+  targets = [
+    {"__address__" = "pve-exporter:9221", "instance" = "pve-cluster"},
+  ]
+  metrics_path = "/pve"
+  params = {
+    "target"  = ["10.10.10.10"],
+    "cluster" = ["1"],
+    "node"    = ["1"],
+  }
+  scrape_interval = "60s"
+  forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
+}
+
+prometheus.scrape "gpu" {
+  targets = [
+{% for host in groups['gpu'] | sort %}
+    {"__address__" = "{{ hostvars[host].ansible_host }}:9835", "instance" = "{{ host }}"},
+{% endfor %}
+  ]
+  scrape_interval = "60s"
+  forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
+}
+
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = "{{ grafana_url }}"
+
+    basic_auth {
+      username = "{{ grafana_user }}"
+      password = sys.env("GRAFANA_TOKEN")
+    }
+  }
+}
+
+prometheus.exporter.blackbox "probes" {
+  config = `
+modules:
+  http_2xx:
+    prober: http
+    timeout: 5s
+  tcp_connect:
+    prober: tcp
+    timeout: 5s
+`
+
+{% for t in probe_targets %}
+  target {
+    name    = "{{ t.name }}"
+    address = "{{ t.address }}"
+    module  = "{{ t.module | default('http_2xx') }}"
+  }
+{% endfor %}
+}
+
+prometheus.scrape "probes" {
+  targets         = prometheus.exporter.blackbox.probes.targets
+  scrape_interval = "60s"
+  forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
+}

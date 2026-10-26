@@ -1,0 +1,25 @@
+- name: Preflight checks
+  ansible.builtin.import_tasks: preflight.yml
+  tags: [always]
+
+- name: Authorized keys
+  ansible.builtin.import_tasks: keys.yml
+  tags: [keys]
+
+- name: Packages
+  ansible.builtin.import_tasks: packages.yml
+  tags: [packages]
+
+- name: Timezone
+  ansible.builtin.import_tasks: timezone.yml
+  tags: [timezone]
+
+- name: Docker boot DNS fix (opt-in)
+  ansible.builtin.import_tasks: network.yml
+  when: baseline_dns_fix | bool
+  tags: [dnsfix]
+
+- name: SSH hardening (opt-in)
+  ansible.builtin.import_tasks: sshd.yml
+  when: baseline_sshd_hardening | bool
+  tags: [sshd]

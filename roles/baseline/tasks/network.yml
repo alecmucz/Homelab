@@ -1,0 +1,5 @@
+- name: Bring hotplug interfaces up at boot
+  ansible.builtin.replace:
+    path: /etc/network/interfaces
+    regexp: '^allow-hotplug (\S+)$'
+    replace: 'auto \1'

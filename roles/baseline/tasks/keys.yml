@@ -1,0 +1,13 @@
+- name: Authorize the automation key for the ansible user
+  ansible.posix.authorized_key:
+    user: ansible
+    key: "{{ automation_pubkey }}"
+    state: present
+  when: ansible_connection | default('ssh') != 'local'
+
+- name: Authorize the personal key on this host's user accounts
+  ansible.posix.authorized_key:
+    user: "{{ item }}"
+    key: "{{ alec_pubkey }}"
+    state: present
+  loop: "{{ baseline_alec_key_users }}"

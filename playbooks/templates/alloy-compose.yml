@@ -1,0 +1,30 @@
+services:
+  alloy:
+    image: grafana/alloy:{{ alloy_version }}
+    container_name: alloy
+    restart: unless-stopped
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    environment:
+      GRAFANA_TOKEN: ${GRAFANA_TOKEN}
+    volumes:
+      - ./config.alloy:/etc/alloy/config.alloy:ro
+      - alloy-data:/var/lib/alloy/data
+    ports:
+      - "127.0.0.1:12345:12345"
+
+  pve-exporter:
+    image: prompve/prometheus-pve-exporter:{{ pve_exporter_version }}
+    container_name: pve-exporter
+    restart: unless-stopped
+    environment:
+      PVE_USER: "{{ pve_user }}"
+      PVE_TOKEN_NAME: "{{ pve_token_name }}"
+      PVE_TOKEN_VALUE: ${PVE_TOKEN_VALUE}
+      PVE_VERIFY_SSL: "false"
+
+volumes:
+  alloy-data:

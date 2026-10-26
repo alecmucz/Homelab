@@ -1,0 +1,12 @@
+[Unit]
+Description=NVIDIA GPU exporter for Prometheus
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/opt/nvidia_gpu_exporter/{{ gpu_exporter_version }}/nvidia_gpu_exporter
+DynamicUser=yes
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

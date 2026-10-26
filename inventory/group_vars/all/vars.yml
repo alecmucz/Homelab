@@ -1,0 +1,6 @@
+ansible_become_password: "{{ vault_become_password }}"
+ansible_python_interpreter: /usr/bin/python3
+
+# Public SSH keys
+automation_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIO9JclzulQzb/zh3Noor5Ndhtsv2Vj17gTxzU6xJ9qs ansible@mgmt01"
+alec_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJkGWL5c3ibjJjJMlvmmwadQ4heoo1cR9kr6bhutkqCN github-mac"

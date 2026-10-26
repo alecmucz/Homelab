@@ -1,0 +1,25 @@
+- name: Install baseline packages
+  ansible.builtin.apt:
+    name: "{{ baseline_packages }}"
+    state: present
+    install_recommends: false
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install reboot-notifier (Debian)
+  ansible.builtin.apt:
+    name: reboot-notifier
+    state: present
+    install_recommends: false
+  when: ansible_facts['distribution'] == 'Debian'
+
+- name: Remove unattended-upgrades
+  ansible.builtin.apt:
+    name: unattended-upgrades
+    state: absent
+
+- name: Keep sudo on sudo.ws (Ubuntu)
+  community.general.alternatives:
+    name: sudo
+    path: /usr/bin/sudo.ws
+  when: ansible_facts['distribution'] == 'Ubuntu'

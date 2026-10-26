@@ -1,0 +1,14 @@
+*.retry
+.ansible/
+*.swp
+.terraform/
+*.tfstate
+*.tfstate.*
+tfplan
+inventory/group_vars/all/vault.yml
+.vault_pass*
+.env
+*.env
+!playbooks/templates/*.env
+*.tfvars
+!terraform/proxmox/terraform.tfvars
