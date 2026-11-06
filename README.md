@@ -123,19 +123,13 @@ and my day.
 
 ```text
 .
-├── ansible.cfg
-├── examples/
-│   └── vault.yml.example   # shape of the vaulted secrets; the real vault stays out of the repo
-├── inventory/
-│   ├── hosts.yml           # the 8 managed hosts and their groups
-│   └── group_vars/
-├── playbooks/
-│   ├── baseline.yml        # SSH keys and key-only login, packages, time
-│   ├── update.yml          # rolling updates
-│   ├── monitoring.yml      # monitoring agents
-│   └── templates/
-├── roles/
-│   └── baseline/
-└── terraform/
-    └── proxmox/            # provisioned a test VM from a cloud-init template
+├── cloud/
+│   └── terraform/          
+└── on-prem/
+    ├── ansible/
+    │   ├── inventory/
+    │   ├── playbooks/
+    │   └── roles/
+    └── terraform/
+        └── proxmox/
 ```
