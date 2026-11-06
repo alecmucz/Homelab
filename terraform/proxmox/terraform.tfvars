@@ -1,1 +1,0 @@
-datastore = "local-zfs"
