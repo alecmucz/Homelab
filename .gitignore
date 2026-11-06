@@ -1,14 +1,20 @@
+# Editors
+*.swp
+
+# Ansible
 *.retry
 .ansible/
-*.swp
+.vault_pass*
+vault.yml
+
+# Env files
+.env
+*.env
+!on-prem/ansible/playbooks/templates/*.env
+
+# Terraform
 .terraform/
 *.tfstate
 *.tfstate.*
-tfplan
-inventory/group_vars/all/vault.yml
-.vault_pass*
-.env
-*.env
-!playbooks/templates/*.env
 *.tfvars
-!terraform/proxmox/terraform.tfvars
+tfplan
