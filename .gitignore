@@ -10,7 +10,7 @@ vault.yml
 # Env files
 .env
 *.env
-!on-prem/ansible/playbooks/templates/*.env
+!on-prem/ansible/roles/*/templates/*.env
 
 # Terraform
 .terraform/

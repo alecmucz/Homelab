@@ -1,0 +1,2 @@
+---
+gpu_exporter_dir: "/opt/nvidia_gpu_exporter/{{ gpu_exporter_version }}"

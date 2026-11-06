@@ -1,0 +1,39 @@
+---
+- name: Create the stack directory
+  ansible.builtin.file:
+    path: "{{ alloy_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy compose.yml
+  ansible.builtin.template:
+    src: alloy-compose.yml
+    dest: "{{ alloy_dir }}/compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Deploy .env
+  ansible.builtin.template:
+    src: alloy.env
+    dest: "{{ alloy_dir }}/.env"
+    owner: root
+    group: root
+    mode: "0600"
+  diff: false
+
+- name: Deploy the Alloy config
+  ansible.builtin.template:
+    src: config.alloy
+    dest: "{{ alloy_dir }}/config.alloy"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart alloy
+
+- name: Start the stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ alloy_dir }}"
+    state: present
