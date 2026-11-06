@@ -1,0 +1,6 @@
+---
+- name: Baseline
+  ansible.builtin.import_playbook: baseline.yml
+
+- name: Monitoring
+  ansible.builtin.import_playbook: monitoring.yml

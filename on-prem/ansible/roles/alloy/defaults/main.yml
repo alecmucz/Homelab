@@ -1,0 +1,2 @@
+---
+alloy_dir: "{{ stacks_dir }}/alloy"

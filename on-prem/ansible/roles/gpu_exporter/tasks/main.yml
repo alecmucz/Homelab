@@ -1,0 +1,31 @@
+---
+- name: Create the versioned install directory
+  ansible.builtin.file:
+    path: "{{ gpu_exporter_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Download and unpack the exporter
+  ansible.builtin.unarchive:
+    src: "https://github.com/utkuozdemir/nvidia_gpu_exporter/releases/download/v{{ gpu_exporter_version }}/nvidia_gpu_exporter_{{ gpu_exporter_version }}_linux_x86_64.tar.gz"
+    dest: "{{ gpu_exporter_dir }}"
+    remote_src: true
+    creates: "{{ gpu_exporter_dir }}/nvidia_gpu_exporter"
+
+- name: Deploy the systemd unit
+  ansible.builtin.template:
+    src: nvidia-gpu-exporter.service
+    dest: /etc/systemd/system/nvidia-gpu-exporter.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart gpu exporter
+
+- name: Enable and start the exporter
+  ansible.builtin.systemd:
+    name: nvidia-gpu-exporter
+    state: started
+    enabled: true
+    daemon_reload: true
