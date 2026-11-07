@@ -1,0 +1,64 @@
+- name: Install image tools
+  ansible.builtin.apt:
+    name: libguestfs-tools
+    state: present
+    cache_valid_time: 3600
+
+- name: Build the Ubuntu 26.04 base image
+  vars:
+    cloud_image_out: "{{ cloud_image_import_dir }}/ubuntu-26.04-base-{{ cloud_image_ubuntu_2604_serial }}.qcow2"
+    cloud_image_work: "{{ cloud_image_work_dir }}/{{ cloud_image_ubuntu_2604_serial }}"
+    cloud_image_img: "{{ cloud_image_work }}/{{ cloud_image_ubuntu_2604_src }}"
+  block:
+    - name: Check for an existing build
+      ansible.builtin.stat:
+        path: "{{ cloud_image_out }}"
+      register: cloud_image_existing
+
+    - name: Build
+      when: not cloud_image_existing.stat.exists
+      block:
+        - name: Create the work directory
+          ansible.builtin.file:
+            path: "{{ cloud_image_work }}"
+            state: directory
+            mode: "0700"
+
+        - name: Download the upstream image
+          ansible.builtin.get_url:
+            url: "{{ cloud_image_ubuntu_2604_url }}/{{ cloud_image_ubuntu_2604_src }}"
+            dest: "{{ cloud_image_img }}"
+            checksum: "sha256:{{ cloud_image_ubuntu_2604_url }}/SHA256SUMS"
+            mode: "0600"
+
+        - name: Keep networking out of the initrd
+          ansible.builtin.command:
+            argv:
+              - virt-customize
+              - -a
+              - "{{ cloud_image_img }}"
+              - --write
+              - '/etc/dracut.conf.d/90-no-initrd-network.conf:omit_dracutmodules+=" network network-legacy network-manager systemd-networkd dyn-netconf "'
+              - --link
+              - /dev/null:/etc/systemd/network/zzzz-dracut-default.network
+              - --run-command
+              - dracut --regenerate-all --force
+              - --run-command
+              - '! for i in /boot/initrd.img-*; do lsinitrd "$i"; done | grep -qE "zzzz-dracut-default|systemd/systemd-networkd$"'
+          changed_when: true
+
+        - name: Compact into the import store
+          ansible.builtin.command:
+            argv: [qemu-img, convert, -c, -O, qcow2, "{{ cloud_image_img }}", "{{ cloud_image_out }}.tmp"]
+          changed_when: true
+
+        - name: Publish the image
+          ansible.builtin.command:
+            argv: [mv, "{{ cloud_image_out }}.tmp", "{{ cloud_image_out }}"]
+          changed_when: true
+
+      always:
+        - name: Remove the work directory
+          ansible.builtin.file:
+            path: "{{ cloud_image_work }}"
+            state: absent

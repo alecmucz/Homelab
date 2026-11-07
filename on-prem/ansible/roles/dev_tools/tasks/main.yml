@@ -1,0 +1,105 @@
+---
+- name: Install the dev toolchain
+  ansible.builtin.apt:
+    name: "{{ dev_tools_packages }}"
+    state: present
+    install_recommends: false
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Shape the personal account
+  ansible.builtin.user:
+    name: "{{ dev_tools_user }}"
+    shell: /bin/bash
+    groups: [sudo]
+    append: true
+
+- name: Allow passwordless sudo for the personal account
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ dev_tools_user }}"
+    content: "{{ dev_tools_user }} ALL=(ALL) NOPASSWD:ALL\n"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/sbin/visudo -cf %s
+
+- name: Create the build filesystem
+  community.general.filesystem:
+    dev: "{{ dev_tools_build_device }}"
+    fstype: ext4
+    opts: -L build
+
+- name: Mount the build disk
+  ansible.posix.mount:
+    path: "{{ dev_tools_build_mount }}"
+    src: LABEL=build
+    fstype: ext4
+    opts: noatime,nofail
+    state: mounted
+
+- name: Create the build directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ dev_tools_user }}"
+    group: "{{ dev_tools_user }}"
+    mode: "0755"
+  loop:
+    - "{{ dev_tools_build_mount }}"
+    - "{{ dev_tools_build_mount }}/cache"
+    - "{{ dev_tools_build_mount }}/bazel"
+
+- name: Create the uv install directory
+  ansible.builtin.file:
+    path: "{{ dev_tools_uv_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Download the pinned uv release
+  ansible.builtin.get_url:
+    url: "https://github.com/astral-sh/uv/releases/download/{{ dev_tools_uv_version }}/uv-x86_64-unknown-linux-gnu.tar.gz"
+    dest: "{{ dev_tools_uv_dir }}/uv.tar.gz"
+    checksum: "sha256:{{ dev_tools_uv_sha256 }}"
+    mode: "0644"
+
+- name: Unpack uv
+  ansible.builtin.unarchive:
+    src: "{{ dev_tools_uv_dir }}/uv.tar.gz"
+    dest: "{{ dev_tools_uv_dir }}"
+    remote_src: true
+    extra_opts: [--strip-components=1]
+    creates: "{{ dev_tools_uv_dir }}/uv"
+
+- name: Link uv and uvx onto the PATH
+  ansible.builtin.file:
+    src: "{{ dev_tools_uv_dir }}/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    state: link
+  loop: [uv, uvx]
+
+- name: Create uv's system config directory
+  ansible.builtin.file:
+    path: /etc/uv
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Point uv's cache at the build disk
+  ansible.builtin.copy:
+    dest: /etc/uv/uv.toml
+    content: "cache-dir = \"{{ dev_tools_build_mount }}/cache/uv\"\n"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Put Bazel's output root on the build disk
+  ansible.builtin.lineinfile:
+    path: "/home/{{ dev_tools_user }}/.bazelrc"
+    line: "startup --output_user_root={{ dev_tools_build_mount }}/bazel"
+    create: true
+    owner: "{{ dev_tools_user }}"
+    group: "{{ dev_tools_user }}"
+    mode: "0644"

@@ -1,0 +1,29 @@
+dev_tools_user: alecmucz
+
+dev_tools_packages:
+  - build-essential
+  - gcc-16
+  - g++-16
+  - cmake
+  - ninja-build
+  - pkg-config
+  - ccache
+  - gdb
+  - valgrind
+  - linux-tools-generic
+  - linux-headers-generic
+  - bpftrace
+  - bpfcc-tools
+  - git
+  - tmux
+  - curl
+  - jq
+  - ripgrep
+  - python3-venv
+
+dev_tools_build_device: /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi1
+dev_tools_build_mount: /build
+
+dev_tools_uv_version: "0.13.5"
+dev_tools_uv_sha256: "f68d291c75783122dad58ab77def0e13f3233f358731db5d6d7e8715603b928f"
+dev_tools_uv_dir: "/opt/uv/{{ dev_tools_uv_version }}"

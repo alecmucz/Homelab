@@ -1,0 +1,21 @@
+---
+- name: Wait for first boot
+  hosts: dev
+  gather_facts: false
+
+  tasks:
+    - name: Wait for SSH
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+    - name: Wait for cloud-init to finish
+      ansible.builtin.command: cloud-init status --wait
+      register: wait_cloud_init
+      changed_when: false
+      failed_when: wait_cloud_init.rc not in [0, 2]
+
+    - name: Check cloud-init applied the network config
+      ansible.builtin.command: grep -q 'Unable to rename' /var/log/cloud-init.log
+      register: wait_rename
+      changed_when: false
+      failed_when: wait_rename.rc != 1

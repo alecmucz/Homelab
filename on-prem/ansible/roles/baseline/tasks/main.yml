@@ -10,6 +10,11 @@
   ansible.builtin.import_tasks: packages.yml
   tags: [packages]
 
+- name: QEMU guest agent (opt-in)
+  ansible.builtin.import_tasks: guest_agent.yml
+  when: baseline_guest_agent | bool
+  tags: [guest_agent]
+
 - name: Timezone
   ansible.builtin.import_tasks: timezone.yml
   tags: [timezone]
