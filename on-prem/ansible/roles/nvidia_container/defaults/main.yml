@@ -1,0 +1,8 @@
+nvidia_container_toolkit_version: "1.20.1-1"
+nvidia_container_repo_url: https://nvidia.github.io/libnvidia-container/stable/deb/amd64
+nvidia_container_repo_key: https://nvidia.github.io/libnvidia-container/gpgkey
+nvidia_container_packages:
+  - nvidia-container-toolkit
+  - nvidia-container-toolkit-base
+  - libnvidia-container-tools
+  - libnvidia-container1

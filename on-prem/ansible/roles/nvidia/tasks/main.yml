@@ -1,0 +1,57 @@
+- name: Install the deb822 helper
+  ansible.builtin.apt:
+    name: python3-debian
+    state: present
+    cache_valid_time: 3600
+
+- name: Add NVIDIA's repository
+  ansible.builtin.deb822_repository:
+    name: cuda
+    uris: "{{ nvidia_repo_url }}"
+    suites: ["/"]
+    signed_by: "{{ nvidia_repo_key }}"
+
+- name: Pin the driver branch
+  ansible.builtin.apt:
+    name: "nvidia-driver-pinning-{{ nvidia_branch }}"
+    state: present
+    update_cache: true
+
+- name: Install the compute-only driver
+  ansible.builtin.apt:
+    name: "{{ nvidia_packages }}"
+    state: present
+  notify:
+    - Rebuild the initramfs
+    - Reboot for the driver
+
+- name: Set GPU profiling access
+  ansible.builtin.copy:
+    dest: /etc/modprobe.d/nvidia-profiling.conf
+    content: "options nvidia NVreg_RestrictProfilingToAdminUsers={{ nvidia_restrict_profiling_to_admins }}\n"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Rebuild the initramfs
+    - Reboot for the driver
+
+- name: Apply pending driver changes now
+  ansible.builtin.meta: flush_handlers
+
+- name: Query the GPU
+  ansible.builtin.command: nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
+  register: nvidia_smi
+  changed_when: false
+
+- name: Read the loaded profiling setting
+  ansible.builtin.command: grep -E '^RmProfilingAdminOnly:' /proc/driver/nvidia/params
+  register: nvidia_profiling
+  changed_when: false
+
+- name: Confirm the pinned branch and profiling setting are live
+  ansible.builtin.assert:
+    that:
+      - (nvidia_smi.stdout.split(',') | last | trim).startswith(nvidia_branch ~ '.')
+      - (nvidia_profiling.stdout.split(':') | last | trim) == (nvidia_restrict_profiling_to_admins | string)
+    fail_msg: "nvidia-smi: {{ nvidia_smi.stdout }} / {{ nvidia_profiling.stdout }}"

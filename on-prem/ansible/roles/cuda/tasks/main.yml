@@ -1,0 +1,26 @@
+- name: Install the deb822 helper
+  ansible.builtin.apt:
+    name: python3-debian
+    state: present
+    cache_valid_time: 3600
+
+- name: Add NVIDIA's repository
+  ansible.builtin.deb822_repository:
+    name: cuda
+    uris: "{{ cuda_repo_url }}"
+    suites: ["/"]
+    signed_by: "{{ cuda_repo_key }}"
+
+- name: Install the CUDA toolkit
+  ansible.builtin.apt:
+    name: "cuda-toolkit-{{ cuda_version | replace('.', '-') }}"
+    state: present
+    update_cache: true
+
+- name: Put nvcc on the PATH
+  ansible.builtin.template:
+    src: cuda.sh.j2
+    dest: /etc/profile.d/cuda.sh
+    owner: root
+    group: root
+    mode: "0644"

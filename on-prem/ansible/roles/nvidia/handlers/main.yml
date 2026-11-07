@@ -1,0 +1,7 @@
+- name: Rebuild the initramfs
+  ansible.builtin.command: dracut --regenerate-all --force
+  changed_when: true
+
+- name: Reboot for the driver
+  ansible.builtin.reboot:
+    reboot_timeout: 600

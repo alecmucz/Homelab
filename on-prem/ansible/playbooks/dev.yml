@@ -2,6 +2,18 @@
 - name: Configure dev hosts
   hosts: dev
   become: true
-
   roles:
     - dev_tools
+
+- name: Install the NVIDIA driver
+  hosts: gpu:&dev
+  become: true
+  roles:
+    - nvidia
+
+- name: Install dev workloads
+  hosts: dev
+  become: true
+  roles:
+    - cuda
+    - pixi

@@ -1,0 +1,4 @@
+pixi_version: "0.83.0"
+pixi_sha256: "064f371e692aaa3400ac581c89da2843c91437f20c2d9155395a5d0037f33551"
+pixi_dir: "/opt/pixi/{{ pixi_version }}"
+pixi_cache_dir: /build/cache/pixi

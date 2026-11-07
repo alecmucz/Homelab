@@ -1,0 +1,33 @@
+- name: Install the deb822 helper
+  ansible.builtin.apt:
+    name: python3-debian
+    state: present
+    cache_valid_time: 3600
+
+- name: Add the NVIDIA Container Toolkit repository
+  ansible.builtin.deb822_repository:
+    name: nvidia-container-toolkit
+    uris: "{{ nvidia_container_repo_url }}"
+    suites: ["/"]
+    signed_by: "{{ nvidia_container_repo_key }}"
+
+- name: Install the pinned toolkit
+  ansible.builtin.apt:
+    name: "{{ nvidia_container_packages | map('regex_replace', '$', '=' ~ nvidia_container_toolkit_version) | list }}"
+    state: present
+    update_cache: true
+
+- name: Keep the CDI spec in step with the driver
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop:
+    - nvidia-cdi-refresh.path
+    - nvidia-cdi-refresh.service
+
+- name: Check the CDI spec lists the GPU
+  ansible.builtin.command: nvidia-ctk cdi list
+  register: nvidia_container_cdi
+  changed_when: false
+  failed_when: "'nvidia.com/gpu=all' not in nvidia_container_cdi.stdout"

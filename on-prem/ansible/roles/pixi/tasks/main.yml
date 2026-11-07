@@ -1,0 +1,45 @@
+- name: Create the pixi install directory
+  ansible.builtin.file:
+    path: "{{ pixi_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Download the pinned pixi release
+  ansible.builtin.get_url:
+    url: "https://github.com/prefix-dev/pixi/releases/download/v{{ pixi_version }}/pixi-x86_64-unknown-linux-musl.tar.gz"
+    dest: "{{ pixi_dir }}/pixi.tar.gz"
+    checksum: "sha256:{{ pixi_sha256 }}"
+    mode: "0644"
+
+- name: Unpack pixi
+  ansible.builtin.unarchive:
+    src: "{{ pixi_dir }}/pixi.tar.gz"
+    dest: "{{ pixi_dir }}"
+    remote_src: true
+    creates: "{{ pixi_dir }}/pixi"
+
+- name: Link pixi onto the PATH
+  ansible.builtin.file:
+    src: "{{ pixi_dir }}/pixi"
+    dest: /usr/local/bin/pixi
+    state: link
+
+- name: Create pixi's system config directory
+  ansible.builtin.file:
+    path: /etc/pixi
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Point pixi's cache at the build disk
+  ansible.builtin.copy:
+    dest: /etc/pixi/config.toml
+    content: |
+      [cache]
+      root = "{{ pixi_cache_dir }}"
+    owner: root
+    group: root
+    mode: "0644"
