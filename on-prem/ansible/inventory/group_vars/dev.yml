@@ -1,0 +1,5 @@
+baseline_sshd_hardening: true
+baseline_alec_key_users: [alecmucz]
+baseline_guest_agent: true
+availability: on_demand
+ansible_ssh_common_args: -o StrictHostKeyChecking=accept-new

@@ -1,6 +1,12 @@
 ---
+- name: Wait for first boot
+  ansible.builtin.import_playbook: wait.yml
+
 - name: Baseline
   ansible.builtin.import_playbook: baseline.yml
+
+- name: Dev hosts
+  ansible.builtin.import_playbook: dev.yml
 
 - name: Monitoring
   ansible.builtin.import_playbook: monitoring.yml

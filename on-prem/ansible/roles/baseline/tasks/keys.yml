@@ -5,6 +5,12 @@
     state: present
   when: ansible_connection | default('ssh') != 'local'
 
+- name: Make sure the personal key's accounts exist
+  ansible.builtin.user:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ baseline_alec_key_users }}"
+
 - name: Authorize the personal key on this host's user accounts
   ansible.posix.authorized_key:
     user: "{{ item }}"

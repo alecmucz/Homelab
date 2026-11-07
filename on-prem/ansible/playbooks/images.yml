@@ -1,0 +1,6 @@
+---
+- name: Build cloud images
+  hosts: pve02
+  become: true
+  roles:
+    - cloud_image

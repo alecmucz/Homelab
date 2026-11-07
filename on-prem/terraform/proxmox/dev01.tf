@@ -1,13 +1,14 @@
 resource "proxmox_virtual_environment_vm" "dev01" {
   name        = "dev01"
   description = "On-prem dev server: Mojo/MAX, compiler builds, projects. Managed by Terraform."
-  tags        = ["Terraform", "Proxmox", "Ubuntu"]
+  tags        = ["proxmox", "terraform", "ubuntu"]
 
   node_name = "pve02"
   vm_id     = 223
 
   agent {
-    enabled = false
+    enabled = true
+    wait_for_ip { disabled = true }
   }
   stop_on_destroy = true
   on_boot         = true
@@ -38,7 +39,7 @@ resource "proxmox_virtual_environment_vm" "dev01" {
 
   disk {
     datastore_id = "local-zfs"
-    import_from  = proxmox_download_file.ubuntu_2604.id
+    import_from  = data.proxmox_file.ubuntu_2604_base.id
     interface    = "scsi0"
     size         = 64
     iothread     = true
@@ -83,8 +84,8 @@ resource "proxmox_virtual_environment_vm" "dev01" {
     }
 
     user_account {
-      username = "alecmucz"
-      keys     = var.ssh_public_keys
+      username = "ansible"
+      keys     = [trimspace(file(pathexpand("~/.ssh/id_ed25519.pub")))]
     }
   }
 }

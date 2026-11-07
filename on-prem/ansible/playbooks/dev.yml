@@ -1,0 +1,7 @@
+---
+- name: Configure dev hosts
+  hosts: dev
+  become: true
+
+  roles:
+    - dev_tools
