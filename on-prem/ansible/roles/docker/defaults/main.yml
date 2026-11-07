@@ -1,0 +1,7 @@
+docker_data_root: /build/docker
+docker_users:
+  - alecmucz
+docker_packages:
+  - docker.io
+  - docker-compose-v2
+  - docker-buildx

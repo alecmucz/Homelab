@@ -1,0 +1,49 @@
+- name: Create Docker's config directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - /etc/docker
+    - /etc/systemd/system/docker.service.d
+
+- name: Keep Docker's data on the build disk
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    content: "{{ {'data-root': docker_data_root} | to_nice_json }}\n"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart docker
+
+- name: Start Docker only once the build disk is mounted
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/docker.service.d/build-disk.conf
+    content: |
+      [Unit]
+      RequiresMountsFor={{ docker_data_root }}
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart docker
+
+- name: Install Docker and Compose
+  ansible.builtin.apt:
+    name: "{{ docker_packages }}"
+    state: present
+    cache_valid_time: 3600
+
+- name: Let the personal account use Docker
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: [docker]
+    append: true
+  loop: "{{ docker_users }}"
+
+- name: Enable and start Docker
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: true

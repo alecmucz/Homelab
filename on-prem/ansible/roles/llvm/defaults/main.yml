@@ -1,0 +1,10 @@
+llvm_version: "23"
+llvm_codename: "{{ ansible_facts['distribution_release'] }}"
+llvm_packages:
+  - "clang-{{ llvm_version }}"
+  - "lld-{{ llvm_version }}"
+  - "clang-format-{{ llvm_version }}"
+  - "clang-tidy-{{ llvm_version }}"
+  - "clangd-{{ llvm_version }}"
+  - "libc++-{{ llvm_version }}-dev"
+  - "libc++abi-{{ llvm_version }}-dev"

@@ -1,0 +1,7 @@
+nvidia_branch: "620"
+nvidia_repo_url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2604/x86_64/
+nvidia_repo_key: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2604/x86_64/60DF8A40.pub
+nvidia_packages:
+  - libnvidia-compute
+  - nvidia-dkms-open
+nvidia_restrict_profiling_to_admins: 0

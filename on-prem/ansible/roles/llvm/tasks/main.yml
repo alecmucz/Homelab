@@ -1,0 +1,30 @@
+- name: Install the deb822 helper
+  ansible.builtin.apt:
+    name: python3-debian
+    state: present
+    cache_valid_time: 3600
+
+- name: Add the apt.llvm.org repository
+  ansible.builtin.deb822_repository:
+    name: llvm
+    uris: "https://apt.llvm.org/{{ llvm_codename }}/"
+    suites: ["llvm-toolchain-{{ llvm_codename }}-{{ llvm_version }}"]
+    components: [main]
+    signed_by: https://apt.llvm.org/llvm-snapshot.gpg.key
+
+- name: Keep apt.llvm.org below the Ubuntu archive
+  ansible.builtin.copy:
+    dest: /etc/apt/preferences.d/llvm
+    content: |
+      Package: *
+      Pin: origin apt.llvm.org
+      Pin-Priority: 100
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Install the LLVM toolchain
+  ansible.builtin.apt:
+    name: "{{ llvm_packages }}"
+    state: present
+    update_cache: true
